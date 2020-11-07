@@ -83,6 +83,14 @@
     module.ctx.fillRect(0, 0, module.canvas.width, module.canvas.height);
   };
 
+  module.getImageData = (x, y, width, height) => {
+    return module.ctx.getImageData(x, y, width, height);
+  };
+
+  module.putImageData = (imageData, x, y) => {
+    return module.ctx.putImageData(imageData, x, y);
+  };
+
   // Animation manipulation
 
   let NO_LOOP = false;
@@ -152,6 +160,7 @@
   // Shapes
 
   module.Text = (text, x, y, maxWidth) => {
+    module.ctx.beginPath();
     let params = [text, x, y, maxWidth];
     if (typeof maxWidth == "undefined") {
       params = [text, x, y];
@@ -179,6 +188,7 @@
   };
 
   module.Rectangle = (x, y, width, height) => {
+    module.ctx.beginPath();
     module.ctx.rect(x, y, width, height);
     if (!NO_FILL) module.ctx.fill();
     else module.ctx.stroke();

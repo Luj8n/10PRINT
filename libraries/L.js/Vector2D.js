@@ -2,144 +2,131 @@
   let module = (global.L = { ...global.L });
 
   module.Vector2D = class Vector2D {
-    constructor(
-      magnitude = 1,
-      direction = 0,
-      x = Math.cos(direction) * magnitude,
-      y = Math.sin(direction) * magnitude
-    ) {
-      this.magnitude = magnitude;
-      this.direction = direction;
+    constructor(x = 0, y = 0) {
       this.x = x;
       this.y = y;
       this.max = Infinity;
     }
-    reCalculatePos() {
-      this.x = Math.cos(this.direction) * this.magnitude;
-      this.y = Math.sin(this.direction) * this.magnitude;
+    calculatePos(dir, mag) {
+      this.x = Math.cos(dir) * mag;
+      this.y = Math.sin(dir) * mag;
     }
-    reCalculateMag() {
-      let tempVector2D = module.createVector2D(this.x, this.y);
-      this.magnitude = tempVector2D.magnitude;
+    mag() {
+      return Math.sqrt(this.x * this.x + this.y * this.y);
     }
-    reCalculateDir() {
-      let tempVector2D = module.createVector2D(this.x, this.y);
-      this.direction = tempVector2D.direction;
-    }
-    setPos(newX, newY) {
-      this.x = newX;
-      this.y = newY;
-      this.reCalculateMag();
-      this.reCalculateDir();
+    heading() {
+      let dir = Math.atan(this.y / this.x);
+      if (this.x >= 0 && this.y >= 0) {
+        // first quadrant
+      } else if (this.x <= 0 && this.y >= 0) {
+        // second quadrant
+        dir += Math.PI;
+      } else if (this.x < 0 && this.y <= 0) {
+        // third quadrant
+        dir += Math.PI;
+      } else if (this.x >= 0 && this.y <= 0) {
+        // fourth quadrant
+        dir += Math.PI * 2;
+      }
+      if (isNaN(dir)) dir = 0;
+      return dir % (Math.PI * 2);
     }
     limit(max) {
-      if (max) {
+      if (typeof max != "undefined") {
         this.max = max;
-        if (this.magnitude > this.max) {
-          this.setMag(this.max);
-          this.reCalculatePos();
-        }
+        this.setMag(this.mag());
       }
       return this;
     }
     setMag(mag) {
-      if (mag) {
+      if (typeof mag != "undefined") {
+        let newMag = mag;
         if (mag > this.max) {
-          this.magnitude = this.max;
-          console.log("The new magnitude is more than the limit, set to the limit");
-        } else {
-          this.magnitude = mag;
+          newMag = this.max;
         }
-        this.reCalculatePos();
+        this.calculatePos(this.heading(), newMag);
       }
       return this;
     }
-    add(anotherVector2D) {
-      this.x += anotherVector2D.x;
-      this.y += anotherVector2D.y;
-      this.reCalculateMag();
-      this.reCalculateDir();
-      this.limit(this.max);
-      return this;
-    }
-    static add(vector1, vector2) {
-      return module.createVector2D(vector1.x + vector2.x, vector1.y + vector2.y);
-    }
-    sub(anotherVector2D) {
-      this.x -= anotherVector2D.x;
-      this.y -= anotherVector2D.y;
-      this.reCalculateMag();
-      this.reCalculateDir();
-      this.limit(this.max);
-      return this;
-    }
-    static sub(vector1, vector2) {
-      return module.createVector2D(vector1.x - vector2.x, vector1.y - vector2.y);
-    }
-    mult(scalar) {
-      this.x *= scalar;
-      this.y *= scalar;
-      this.reCalculateMag();
-      this.reCalculateDir();
-      this.limit(this.max);
-      return this;
-    }
-    div(scalar) {
-      if (scalar === 0) {
-        console.log("Can't devide by zero");
-      } else {
-        this.x /= scalar;
-        this.y /= scalar;
-        this.reCalculateMag();
-        this.reCalculateDir();
-        this.limit(this.max);
+    rotate(angle) {
+      if (typeof angle != "undefined") {
+        let newAngle = (this.heading() + angle) % (Math.PI * 2);
+        this.calculatePos(newAngle, this.mag());
       }
       return this;
     }
     normalize() {
-      if (this.x === 0 && this.y === 0) {
-        this.magnitude = 1;
+      this.calculatePos(this.heading(), 1);
+      this.max = Infinity;
+    }
+    add(otherV) {
+      if (typeof otherV != "undefined") {
+        this.x += otherV.x;
+        this.y += otherV.y;
+        this.setMag(this.mag());
       }
-      this.x /= this.magnitude;
-      this.y /= this.magnitude;
-      this.magnitude = 1;
       return this;
     }
-    rotate(angle) {
-      this.direction = (this.direction + angle) % (Math.PI * 2);
-      this.reCalculatePos();
+    sub(otherV) {
+      if (typeof otherV != "undefined") {
+        this.x -= otherV.x;
+        this.y -= otherV.y;
+        this.setMag(this.mag());
+      }
       return this;
+    }
+    mult(scalar) {
+      if (typeof scalar != "undefined") {
+        this.x *= scalar;
+        this.y *= scalar;
+        this.setMag(this.mag());
+      }
+      return this;
+    }
+    div(scalar) {
+      if (typeof scalar != "undefined") {
+        if (scalar === 0) {
+          console.log("Can't devide by zero");
+        } else {
+          this.x /= scalar;
+          this.y /= scalar;
+          this.setMag(this.mag());
+        }
+      }
+      return this;
+    }
+    clone() {
+      return module.createVector2D(this.x, this.y);
+    }
+    // static methods
+    static add(v1, v2) {
+      if (typeof v1 != "undefined" && typeof v2 != "undefined") {
+        return module.createVector2D(v1.x + v2.x, v1.y + v2.y);
+      }
+    }
+    static sub(v1, v2) {
+      if (typeof v1 != "undefined" && typeof v2 != "undefined") {
+        return module.createVector2D(v1.x - v2.x, v1.y - v2.y);
+      }
     }
     static random2D() {
       return this.fromAngle(Math.random() * Math.PI * 2);
     }
-    static dist(x1, y1, x2, y2) {
-      return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-    }
-    static angleBetween(vector1, vector2) {
-      return Math.abs(vector1.direction - vector2.direction);
+    static angleBetween(v1, v2) {
+      if (typeof v1 != "undefined" && typeof v2 != "undefined") {
+        return Math.abs(v1.heading() - v2.heading());
+      }
     }
     static fromAngle(angle) {
-      return new module.Vector2D(1, angle);
+      if (typeof angle != "undefined") {
+        let x = Math.cos(angle);
+        let y = Math.sin(angle);
+        return new module.Vector2D(x, y);
+      }
     }
   };
 
   module.createVector2D = (x = 0, y = 0) => {
-    let mag = Math.sqrt(x * x + y * y);
-    let dir = Math.atan(y / x);
-    if (x >= 0 && y >= 0) {
-      // first quadrant
-    } else if (x <= 0 && y >= 0) {
-      // second quadrant
-      dir += Math.PI;
-    } else if (x < 0 && y <= 0) {
-      // third quadrant
-      dir += Math.PI;
-    } else if (x >= 0 && y <= 0) {
-      // fourth quadrant
-      dir += Math.PI * 2;
-    }
-    if (isNaN(dir)) dir = 0;
-    return new module.Vector2D(mag, dir, x, y);
+    return new module.Vector2D(x, y);
   };
 })(this);
